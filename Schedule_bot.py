@@ -98,7 +98,7 @@ def create_notification(r, r_n):
     text = text + "次回スケジュール\n"
     text = text +create_info_text(r_n)
     send_discord_notification(text, embeds)
-    print(datetime.datetime.now(timezone('JST')))
+    print(datetime.datetime.now(timezone('Asia/Tokyo')))
 
 def main():
     try:
@@ -110,12 +110,12 @@ def main():
         salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S')
         salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S')
 
-        now = datetime.datetime.now(timezone('JST'))
+        now = datetime.datetime.now(timezone('Asia/Tokyo'))
         if now > salmon_start_now:
             create_notification(r0, r1)
 
         while True:
-            now = datetime.datetime.now(timezone('JST'))
+            now = datetime.datetime.now(timezone('Asia/Tokyo'))
             if now >= salmon_start_next:
                 create_notification(r1, r2)
                 result = collectData("coop/schedule")
