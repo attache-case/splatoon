@@ -54,8 +54,8 @@ def send_discord_notification(text, embeds):
     requests.post(url, headers = headers ,data = json.dumps(post_json))
 
 def create_info_text(r):
-    start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S')
-    end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S')
+    start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+    end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
     text = ""
     text = text + create_time_string(start) + "～" + create_time_string(end) + "\n"
     text = text + "ステージ：" + r['stage']['name'] + '\n'
@@ -107,8 +107,8 @@ def main():
         r0 = result[0]
         r1 = result[1]
         r2 = result[2]
-        salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S')
-        salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S')
+        salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
 
         now = datetime.datetime.now(timezone('Asia/Tokyo'))
         if now > salmon_start_now:
@@ -121,13 +121,13 @@ def main():
                 result = collectData("coop/schedule")
                 r1 = result[1]
                 r2 = result[2]
-                salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S')
+                salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
             else:
                 if now.minute != prev_collect_minute and now.minute % 10 == 5:
                     result = collectData("coop/schedule")
                     r1 = result[1]
                     r2 = result[2]
-                    salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S')
+                    salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
                     prev_collect_minute = now.minute
             time.sleep(1)
     except KeyboardInterrupt:
