@@ -106,28 +106,24 @@ def main():
         result = collectData("coop/schedule")
         r0 = result[0]
         r1 = result[1]
-        r2 = result[2]
         salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-        salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-
-        now = datetime.datetime.now(timezone('Asia/Tokyo'))
-        if now > salmon_start_now:
-            create_notification(r0, r1)
 
         while True:
             now = datetime.datetime.now(timezone('Asia/Tokyo'))
-            if now >= salmon_start_next:
-                create_notification(r1, r2)
+            if now >= salmon_start_now:
+                create_notification(r0, r1)
                 result = collectData("coop/schedule")
-                r1 = result[1]
-                r2 = result[2]
-                salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                r0 = result[1]
+                r1 = result[2]
+                salmon_start_now = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
             else:
                 if now.minute != prev_collect_minute and now.minute % 10 == 5:
                     result = collectData("coop/schedule")
-                    r1 = result[1]
-                    r2 = result[2]
-                    salmon_start_next = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                    start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                    if salmon_start_now == start: 
+                        r0 = result[0]
+                        r1 = result[1]
+                        salmon_start_now = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
                     prev_collect_minute = now.minute
             time.sleep(1)
     except KeyboardInterrupt:
