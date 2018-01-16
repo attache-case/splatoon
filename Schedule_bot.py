@@ -7,9 +7,6 @@ import datetime
 import json
 import requests
 
-# argvs = sys.argv
-# argc = len(argvs)
-
 def weekday_jpn(i):
     if i == 0:
         return "月"
@@ -90,7 +87,7 @@ def create_embeds(r):
         embeds.append(obj)
     return embeds
 
-def create_notification(r, r_n):
+def create_start_notification(r, r_n):
     text = "サーモンランオープン！\n"
     text = text + create_info_text(r)
     embeds = create_embeds(r)
@@ -98,9 +95,30 @@ def create_notification(r, r_n):
     text = text + "次回スケジュール\n"
     text = text +create_info_text(r_n)
     send_discord_notification(text, embeds)
+    print("notify salmon start")
+    print(datetime.datetime.now(timezone('Asia/Tokyo')))
+
+def create_end_notification(r):
+    text = "サーモンラン終了！次回予告！\n"
+    text = text + create_info_text(r)
+    send_discord_notification(text, [])
+    print("notify salmon end")
     print(datetime.datetime.now(timezone('Asia/Tokyo')))
 
 def main():
+
+    argvs = sys.argv
+    argc = len(argvs)
+    notification_available = True
+    current_salmon_ended = False
+
+    if argc == 2:
+        enable = int(argvs[1])
+        if enable == 0:
+            notification_available = False
+        elif enable == 1:
+            notification_available = True
+
     try:
         prev_collect_minute = 5
         result = collectData("coop/schedule")
@@ -111,7 +129,9 @@ def main():
         while True:
             now = datetime.datetime.now(timezone('Asia/Tokyo'))
             if now >= salmon_start_now:
-                create_notification(r0, r1)
+                current_salmon_ended = False
+                if notification_available is True:
+                    create_start_notification(r0, r1)
                 result = collectData("coop/schedule")
                 r0 = result[1]
                 r1 = result[2]
@@ -120,10 +140,14 @@ def main():
                 if now.minute != prev_collect_minute and now.minute % 10 == 5:
                     result = collectData("coop/schedule")
                     start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-                    if salmon_start_now == start: 
+                    if salmon_start_now == start:
                         r0 = result[0]
                         r1 = result[1]
                         salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                        if current_salmon_ended is False:
+                            notification_available = True
+                            create_end_notification(r0)
+                            current_salmon_ended = True
                     prev_collect_minute = now.minute
             time.sleep(1)
     except KeyboardInterrupt:
