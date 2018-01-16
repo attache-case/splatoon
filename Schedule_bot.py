@@ -123,7 +123,7 @@ def main():
                     if salmon_start_now == start: 
                         r0 = result[0]
                         r1 = result[1]
-                        salmon_start_now = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                        salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
                     prev_collect_minute = now.minute
             time.sleep(1)
     except KeyboardInterrupt:
