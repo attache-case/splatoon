@@ -145,7 +145,7 @@ def main():
                         r1 = result[1]
                         salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
                         if current_salmon_ended is False:
-                            notification_available = True:
+                            notification_available = True
                             create_end_notification(r0)
                             current_salmon_ended = True
                     prev_collect_minute = now.minute
