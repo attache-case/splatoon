@@ -135,7 +135,7 @@ def main():
                 result = collectData("coop/schedule")
                 r0 = result[1]
                 r1 = result[2]
-                salmon_start_now = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
             else:
                 if now.minute != prev_collect_minute and now.minute % 10 == 5:
                     result = collectData("coop/schedule")
