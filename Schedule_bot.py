@@ -110,7 +110,7 @@ def main():
     argvs = sys.argv
     argc = len(argvs)
     notification_available = True
-    current_salmon_ended = False
+    salmon_ongoing = False
 
     if argc == 2:
         enable = int(argvs[1])
@@ -124,30 +124,27 @@ def main():
         result = collectData("coop/schedule")
         r0 = result[0]
         r1 = result[1]
-        salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        salmon_trigger_time = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
 
+        # This code assert that the API doesn't mistake time
         while True:
             now = datetime.datetime.now(timezone('Asia/Tokyo'))
-            if now >= salmon_start_now:
-                current_salmon_ended = False
-                if notification_available is True:
-                    create_start_notification(r0, r1)
-                result = collectData("coop/schedule")
-                r0 = result[1]
-                r1 = result[2]
-                salmon_start_now = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-            else:
-                if now.minute != prev_collect_minute and now.minute % 10 == 5:
+            if salmon_ongoing is False:
+                if now >= salmon_trigger_time:
+                    salmon_ongoing = True
+                    if notification_available is True:
+                        create_start_notification(r0, r1)
+            else: # salmon_ongoing is True
+                if now.minute != prev_collect_minute and now.minute % 10 == 1:
                     result = collectData("coop/schedule")
+                    r0 = result[0]
+                    r1 = result[1]
                     start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-                    if salmon_start_now == start:
-                        r0 = result[0]
-                        r1 = result[1]
-                        salmon_start_now = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-                        if current_salmon_ended is False:
-                            notification_available = True
+                    if salmon_trigger_time != start: # means that current salmon run has ended
+                        salmon_ongoing = False
+                        salmon_trigger_time = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                        if notification_available is True:
                             create_end_notification(r0)
-                            current_salmon_ended = True
                     prev_collect_minute = now.minute
             time.sleep(1)
     except KeyboardInterrupt:
