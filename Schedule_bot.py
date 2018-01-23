@@ -51,41 +51,48 @@ def send_discord_notification(text, embeds):
     requests.post(url, headers = headers ,data = json.dumps(post_json))
 
 def create_info_text(r):
-    start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-    end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
     text = ""
-    text = text + create_time_string(start) + "～" + create_time_string(end) + "\n"
-    text = text + "ステージ：" + r['stage']['name'] + '\n'
-    text = text + "武器："
-    for i, weapon in enumerate(r['weapons']):
-        if i < 3:
-            text = text + weapon['name'] + "　"
-        else:
-            text = text + weapon['name'] + "\n"
-    return text
+    try:
+        start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        text = text + create_time_string(start) + "～" + create_time_string(end) + "\n"
+        text = text + "ステージ：" + r['stage']['name'] + '\n'
+        text = text + "武器："
+        for i, weapon in enumerate(r['weapons']):
+            if i < 3:
+                text = text + weapon['name'] + "　"
+            else:
+                text = text + weapon['name'] + "\n"
+        return text
+    except:
+        text = text + "\n" + ":salmon:不明情報アリ:salmon:"
+        return text
 
 def create_embeds(r):
     embeds = []
-    obj = dict(
-        type = "rich",
-        image = dict(
-            url = r['stage']['image'],
-            height = 90,
-            width = 160
-        )
-    )
-    embeds.append(obj)
-    for i, weapon in enumerate(r['weapons']):
+    try:
         obj = dict(
             type = "rich",
             image = dict(
-                url = weapon['image'],
-                height = 32,
-                width = 32
+                url = r['stage']['image'],
+                height = 90,
+                width = 160
             )
         )
         embeds.append(obj)
-    return embeds
+        for i, weapon in enumerate(r['weapons']):
+            obj = dict(
+                type = "rich",
+                image = dict(
+                    url = weapon['image'],
+                    height = 32,
+                    width = 32
+                )
+            )
+            embeds.append(obj)
+        return embeds
+    except:
+        return []
 
 def create_start_notification(r, r_n):
     text = "サーモンランオープン！\n"
@@ -93,7 +100,7 @@ def create_start_notification(r, r_n):
     embeds = create_embeds(r)
     text = text + "\n"
     text = text + "次回スケジュール\n"
-    text = text +create_info_text(r_n)
+    text = text + create_info_text(r_n)
     send_discord_notification(text, embeds)
     print("notify salmon start")
     print(datetime.datetime.now(timezone('Asia/Tokyo')))
@@ -124,34 +131,48 @@ def main():
         result = collectData("coop/schedule")
         r0 = result[0]
         r1 = result[1]
-        salmon_trigger_time = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        salmon_trigger_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        print("SET salmon_trigger_start:")
+        print(salmon_trigger_start)
+        print("SET salmon_trigger_end:")
+        print(salmon_trigger_end)
 
         # This code assert that the API doesn't mistake time
         while True:
             now = datetime.datetime.now(timezone('Asia/Tokyo'))
             if salmon_ongoing is False:
-                if now >= salmon_trigger_time:
+                if now >= salmon_trigger_start:
                     salmon_ongoing = True
+                    salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
                     if notification_available is True:
                         create_start_notification(r0, r1)
+                else: # update r0, r1 every 10 minutes while salmon is not ongoing
+                    if now.minute != prev_collect_minute and now.minute % 10 == 5:
+                        result = collectData("coop/schedule")
+                        r0 = result[0]
+                        r1 = result[1]
+                        r0_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                        if r0_start != salmon_trigger_start:
+                            salmon_trigger_start = r0_start
+                            print("SET salmon_trigger_start:")
+                            print(salmon_trigger_start)
+                        prev_collect_minute = now.minute
             else: # salmon_ongoing is True
-                if now.minute != prev_collect_minute and now.minute % 10 == 1:
-                    result = collectData("coop/schedule")
-                    r0 = result[0]
-                    r1 = result[1]
-                    start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-                    if salmon_trigger_time != start: # means that current salmon run has ended
-                        salmon_ongoing = False
-                        salmon_trigger_time = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-                        if notification_available is True:
-                            create_end_notification(r0)
-                    prev_collect_minute = now.minute
+                if now >= salmon_trigger_end:
+                    salmon_ongoing = False
+                    if notification_available is True:
+                        create_end_notification(r1)
+                    salmon_trigger_start = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                    print("SET salmon_trigger_start:")
+                    print(salmon_trigger_start)
             time.sleep(1)
     except KeyboardInterrupt:
         print("KeyboardInterrupt")
         exit(0)
     except:
         print("=exception=")
+        print(now)
         raise
         time.sleep(1)
 
