@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import sys
+import pytz
 from pytz import timezone
 import time
 import datetime
@@ -103,19 +104,20 @@ def create_start_notification(r, r_n):
     text = text + create_info_text(r_n)
     send_discord_notification(text, embeds)
     print("notify salmon start")
-    print(datetime.datetime.now(timezone('Asia/Tokyo')))
+    print(datetime.datetime.now(tz=pytz.utc).astimezone(tz))
 
 def create_end_notification(r):
     text = "サーモンラン終了！次回予告！\n"
     text = text + create_info_text(r)
     send_discord_notification(text, [])
     print("notify salmon end")
-    print(datetime.datetime.now(timezone('Asia/Tokyo')))
+    print(datetime.datetime.now(tz=pytz.utc).astimezone(tz))
 
 def main():
 
     argvs = sys.argv
     argc = len(argvs)
+    tz = timezone('Asia/Tokyo')
     notification_available = True
     salmon_ongoing = False
 
@@ -131,8 +133,8 @@ def main():
         result = collectData("coop/schedule")
         r0 = result[0]
         r1 = result[1]
-        salmon_trigger_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
-        salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+        salmon_trigger_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').astimezone(tz)
+        salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').astimezone(tz)
         print("SET salmon_trigger_start:")
         print(salmon_trigger_start)
         print("SET salmon_trigger_end:")
@@ -140,11 +142,11 @@ def main():
 
         # This code assert that the API doesn't mistake time
         while True:
-            now = datetime.datetime.now(timezone('Asia/Tokyo'))
+            now = datetime.datetime.now(tz=pytz.utc).astimezone(tz)
             if salmon_ongoing is False:
                 if now >= salmon_trigger_start:
                     salmon_ongoing = True
-                    salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                    salmon_trigger_end = datetime.datetime.strptime(r0['end'], '%Y-%m-%dT%H:%M:%S').astimezone(tz)
                     if notification_available is True:
                         create_start_notification(r0, r1)
                 else: # update r0, r1 every 10 minutes while salmon is not ongoing
@@ -152,7 +154,7 @@ def main():
                         result = collectData("coop/schedule")
                         r0 = result[0]
                         r1 = result[1]
-                        r0_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                        r0_start = datetime.datetime.strptime(r0['start'], '%Y-%m-%dT%H:%M:%S').astimezone(tz)
                         if r0_start != salmon_trigger_start:
                             salmon_trigger_start = r0_start
                             print("SET salmon_trigger_start:")
@@ -163,7 +165,7 @@ def main():
                     salmon_ongoing = False
                     if notification_available is True:
                         create_end_notification(r1)
-                    salmon_trigger_start = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+                    salmon_trigger_start = datetime.datetime.strptime(r1['start'], '%Y-%m-%dT%H:%M:%S').astimezone(tz)
                     print("SET salmon_trigger_start:")
                     print(salmon_trigger_start)
             time.sleep(1)
