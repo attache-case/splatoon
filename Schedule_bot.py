@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import sys
+import pytz
 from pytz import timezone
 import pytz
 import time
@@ -57,8 +58,8 @@ def send_discord_notification(text, embeds):
 def create_info_text(r):
     text = ""
     try:
-        start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S')..replace(tzinfo=tz_utc).astimezone(tz=tz_jst)
-        end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S')..replace(tzinfo=tz_utc).astimezone(tz=tz_jst)
+        start = datetime.datetime.strptime(r['start'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=tz_utc).astimezone(tz=tz_jst)
+        end = datetime.datetime.strptime(r['end'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=tz_utc).astimezone(tz=tz_jst)
         text = text + create_time_string(start) + "～" + create_time_string(end) + "\n"
         text = text + "ステージ：" + r['stage']['name'] + '\n'
         text = text + "武器："
@@ -120,6 +121,7 @@ def main():
 
     argvs = sys.argv
     argc = len(argvs)
+    tz = timezone('Asia/Tokyo')
     notification_available = True
     salmon_ongoing = False
 
