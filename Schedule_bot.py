@@ -11,6 +11,7 @@ import requests
 
 tz_utc = pytz.utc
 tz_jst = timezone('Asia/Tokyo')
+DISCORD_WEBHOOK_URL = YOUR_DISCORD_WEBHOOK_URL
 
 def weekday_jpn(i):
     if i == 0:
@@ -45,7 +46,7 @@ def collectData(str_target):
     return result_obj["result"]
 
 def send_discord_notification(text, embeds):
-    url = 'https://discordapp.com/api/webhooks/401828481421279243/h7CEWxoRr34PZYUPHWOYW_gpdxhIHeqKBYtyz6GkmomwXKMeGKpduXj4YtO2XxTQBal9'
+    url = DISCORD_WEBHOOK_URL
     headers = {
         "Content-Type" : "multipart/form-data"
     }
